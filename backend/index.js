@@ -24,6 +24,8 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
+module.exports = app;
+
 const start = async () => {
     let retries = 5;
     let connected = false;
@@ -41,20 +43,25 @@ const start = async () => {
 
     if (!connected) {
         console.error('❌ CRITICAL: Could not connect to database after multiple attempts.');
-        process.exit(1);
+        return false;
     }
 
     try {
         await initDB();
         await seedData();
-        
-        app.listen(PORT, () => {
-            console.log(`🚀 Server fully operational on http://localhost:${PORT}`);
-        });
+        return true;
     } catch (error) {
         console.error('❌ CRITICAL STARTUP ERROR:', error);
-        process.exit(1);
+        return false;
     }
 };
 
-start();
+if (require.main === module) {
+    start().then(success => {
+        if (success) {
+            app.listen(PORT, () => {
+                console.log(`🚀 Server fully operational on http://localhost:${PORT}`);
+            });
+        }
+    });
+}
