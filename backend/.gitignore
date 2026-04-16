@@ -1,0 +1,13 @@
+# Backend gitignore
+node_modules/
+.env
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# Database files
+local.db
+local.db-journal
+local.db-shm
+local.db-wal
