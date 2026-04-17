@@ -54,6 +54,6 @@ npm run dev
 ### 3. Demo Credentials
 - **Admin**: `admin@exam.com` / `Admin123!`
 - **Student**: `student@exam.com` / `Student123!`
-
+- **Student: "virinchi@gmail.com" / "virinchi"
 ---
 *Created by Antigravity AI*
