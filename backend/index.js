@@ -24,7 +24,12 @@ if (!process.env.JWT_SECRET) {
 
 // Middleware
 app.use(cors({
-    origin: ['https://onlinequiz-23.vercel.app', 'http://localhost:5173'],
+    origin: [
+        'https://onlinequiz-23.vercel.app', 
+        'https://onlinequiz-23.onrender.com',
+        'http://localhost:5173',
+        'http://localhost:3000'
+    ],
     credentials: true
 }));
 app.use(express.json());
