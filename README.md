@@ -52,7 +52,7 @@ npm run dev
 ```
 
 ### 3. Demo Credentials
-- **Admin**: `admin@exam.com` / `Admin123!`
+- **Admin**: `admin@exam.com` / `admin123`
 - **Student**: `student@exam.com` / `Student123!`
 - **Student: "virinchi@gmail.com" / "virinchi"
 ---
