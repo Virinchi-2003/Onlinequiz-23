@@ -10,9 +10,13 @@ if (!url || !authToken) {
     console.error('❌ ERROR: DB_URL or DB_TOKEN is missing in .env file');
 }
 
+if (!url || !authToken) {
+    console.warn('⚠️ WARNING: DB_URL or DB_TOKEN is missing. Database operations will fail.');
+}
+
 const client = createClient({
-    url: url ? url.trim() : '',
-    authToken: authToken ? authToken.trim() : '',
+    url: (url || '').trim(),
+    authToken: (authToken || '').trim(),
 });
 
 // Add a simple health check helper

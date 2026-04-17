@@ -9,8 +9,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Validate Environment Variables
+const requiredEnv = ['DB_URL', 'DB_TOKEN', 'JWT_SECRET'];
+requiredEnv.forEach(env => {
+    if (!process.env[env]) {
+        console.warn(`⚠️ WARNING: ${env} is missing in environment variables!`);
+    }
+});
+
+if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = 'temporary_development_secret_only';
+    console.log('⚠️ Using fallback JWT_SECRET. NOT RECOMMENDED FOR PRODUCTION.');
+}
+
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: ['https://onlinequiz-23.vercel.app', 'http://localhost:5173'],
+    credentials: true
+}));
 app.use(express.json());
 
 // Routes
@@ -20,48 +36,50 @@ app.use('/api/student', require('./routes/studentRoutes'));
 
 // Basic error handler
 app.use((err, req, res, next) => {
-    console.error('SERVER ERROR:', err.stack);
-    res.status(500).json({ message: 'Something went wrong!', error: err.message });
+    console.error('CRITICAL SERVER ERROR:', err);
+    res.status(500).json({ 
+        message: 'Internal Server Error', 
+        error: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred' : err.message,
+        stack: process.env.NODE_ENV === 'production' ? null : err.stack 
+    });
 });
 
-module.exports = app;
-
-const start = async () => {
-    let retries = 5;
-    let connected = false;
-
-    console.log('⏳ Connecting to database...');
+// Initialize database and start server
+let dbInitialized = false;
+const initializeApp = async () => {
+    if (dbInitialized) return;
     
-    while (retries > 0 && !connected) {
-        connected = await require('./config/db').checkConnection();
-        if (!connected) {
-            retries--;
-            console.log(`Retrying database connection... (${retries} attempts left)`);
-            await new Promise(resolve => setTimeout(resolve, 3000));
-        }
-    }
-
-    if (!connected) {
-        console.error('❌ CRITICAL: Could not connect to database after multiple attempts.');
-        return false;
-    }
-
+    console.log('⏳ Initializing Application...');
     try {
-        await initDB();
-        await seedData();
-        return true;
+        const connected = await require('./config/db').checkConnection();
+        if (connected) {
+            await initDB();
+            await seedData();
+            dbInitialized = true;
+            console.log('✅ Database synchronized and ready.');
+        } else {
+            console.error('❌ Database connection failed during initialization.');
+        }
     } catch (error) {
-        console.error('❌ CRITICAL STARTUP ERROR:', error);
-        return false;
+        console.error('❌ Application initialization error:', error);
     }
 };
 
+// Middleware to ensure DB is initialized on first request (Serverless support)
+app.use(async (req, res, next) => {
+    if (!dbInitialized && req.path.startsWith('/api')) {
+        await initializeApp();
+    }
+    next();
+});
+
 if (require.main === module) {
-    start().then(success => {
-        if (success) {
-            app.listen(PORT, () => {
-                console.log(`🚀 Server fully operational on http://localhost:${PORT}`);
-            });
-        }
+    initializeApp().then(() => {
+        app.listen(PORT, () => {
+            const url = process.env.NODE_ENV === 'production' ? 'https://onlinequiz-23.onrender.com' : `http://localhost:${PORT}`;
+            console.log(`🚀 Server fully operational on ${url}`);
+        });
     });
 }
+
+module.exports = app;
